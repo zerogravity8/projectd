@@ -3,14 +3,18 @@ from datetime import datetime
 import re
 
 def mask_card_number(card_number):
-    digits_only = re.sub(r'\D', '', card_number)  # Удаление всех символов, кроме цифр
-    masked_number = digits_only[:6] + "******" + digits_only[-4:]
-    masked_number = ' '.join(masked_number[i:i + 4] for i in range(0, len(masked_number), 4))
-    return masked_number
+   digits_only = re.sub(r'\D', '', card_number)  # Удаление всех символов, кроме цифр
+   masked_number = digits_only[:6] + "******" + digits_only[-4:]
+   masked_number = ' '.join(masked_number[i:i + 4] for i in range(0, len(masked_number), 4))
+   return masked_number
+
+def extract_non_digits(card_number):
+    non_digits = [char for char in card_number if not char.isdigit()]
+    return ''.join(non_digits)
 
 def mask_account_number(account_number):
    # Оставляем только последние 4 цифры номера счета
-   masked_number = '' + account_number[-4:]
+   masked_number = '**' + account_number[-4:]
    return masked_number
 
 def print_last_operations(json_string):
@@ -30,8 +34,8 @@ def print_last_operations(json_string):
        date = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S.%f')
 
        description = operation['description']
-       source = mask_card_number(operation.get('from', ''))
-       destination = mask_account_number(operation['to'])
+       source = extract_non_digits(operation.get('from', '')) + mask_card_number(operation.get('from', ''))
+       destination = extract_non_digits(operation.get('to', '')) + mask_account_number(operation['to'])
        amount = operation['operationAmount']['amount']
        currency = operation['operationAmount']['currency']['name']
 
@@ -42,11 +46,9 @@ def print_last_operations(json_string):
        else:
            masked_card_number = ''
 
-       print(f"Дата: {date.strftime('%d.%m.%Y')}")
-       print(f"Описание: {description}")
-       print(f"Источник: {source}")
-       print(f"Назначение: {destination}")
-       print(f"Сумма: {amount} {currency}")
+       print(f"{date.strftime('%d.%m.%Y')} {description}")
+       print(f"{source} -> {destination}")
+       print(f"{amount} {currency}")
        # Вывод замаскированного номера карты
        if masked_card_number:
            print(f"Номер карты: {masked_card_number}")
